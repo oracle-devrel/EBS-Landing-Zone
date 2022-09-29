@@ -1,0 +1,264 @@
+# Copyright © 2022, Oracle and/or its affiliates.
+# All rights reserved. Licensed under the Universal Permissive License (UPL), Version 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
+title: Oracle E-Business Suite Cloud Manager Tenancy Admin Stack
+description: Oracle E-Business Suite Cloud Manager Tenancy Admin Stack
+schemaVersion: 1.1.0
+version: "20190404"
+
+locale: "en"
+variableGroups:
+  - title: "RM controlled Vars"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Tenancy setup details"
+    variables:
+      - lz_prefix
+      - parent_compartment_ocid
+      - advanced_options
+      - create_identity_personas
+
+  - title: "Network"
+    variables:
+      - create_network_compartment
+      - network_name 
+      - network_compartment_ocid
+    visible: advanced_options
+
+  - title: "Security"
+    variables:
+      - create_security_compartment
+      - security_name
+      - security_compartment_ocid
+      - enable_certificates
+    visible: advanced_options
+
+  - title: "EBS"
+    variables:
+      - create_ebs_workload_compartment
+      - ebs_workload_prefix
+      - ebs_workload_environment_names
+      - create_ebs_group
+      - ebs_workload_compartment_ocid
+      - new_ebs_group_name
+
+  - title: "Secrets"
+    variables:
+      - create_output_secrets
+      - create_vault
+      - existing_vault
+      - vault_name
+      - vault_type
+      - create_secret_key
+      - existing_secret_key
+      - secret_key_name
+      - secret_type
+    visible: advanced_options
+
+variables:
+
+# Tenancy Setup Details
+  lz_prefix:
+    title: Landing Zone Prefix
+    type: string
+    default: "lz"
+    required: true
+    pattern: "^[a-zA-Z][a-zA-Z0-9]*$"
+    minLength: 1
+    maxLength: 8
+    description: The entered text (alphanumeric, max 8 characters) will be prefixed to each resource created by this Stack.
+
+  parent_compartment_ocid:
+    type: oci:identity:compartment:id
+    title: Parent Compartment
+    description: Choose the parent compartment, all the resources will be created under the selected compartment.
+    required: true
+
+  advanced_options:
+    type: boolean
+    default: false
+
+  create_identity_personas:
+    type: boolean 
+    title: Create Identity Personas
+
+  
+  # Network
+  create_network_compartment:
+    title: Create Network Compartment 
+    type: boolean
+    required: true 
+    default: true
+  network_name:
+    title: Network Compartment
+    description: Compartment name for Network
+    type: string
+    required: true
+    pattern: "^[a-zA-Z][a-zA-Z0-9-_.]*$"
+    minLength: 1
+    maxLength: 100
+    default: "network"
+    visible: create_network_compartment
+  network_compartment_ocid:
+    title: Network Compartment
+    description: Compartment name for Network
+    type: oci:identity:compartment:id
+    required: true
+    visible:
+     not:
+      - create_network_compartment
+
+ # Security
+  create_security_compartment:
+    title: Create Security Compartment 
+    type: boolean
+    required: true 
+    default: true
+  security_name:
+    title: Security Compartment
+    description: Compartment name for Security
+    type: string
+    required: true
+    pattern: "^[a-zA-Z][a-zA-Z0-9-_.]*$"
+    minLength: 1
+    maxLength: 100
+    default: "security" 
+    visible: create_security_compartment
+  security_compartment_ocid:
+    title: Security Compartment
+    description: Existing Security compartment
+    type: oci:identity:compartment:id
+    visible:
+     not:
+      - create_security_compartment
+  enable_certificates:
+    title: Enable Certificates 
+    description: if true, creates a dynamic group and policy that is required to use the certificate service
+    type: boolean
+    visible: create_security_compartment
+
+
+
+# EBS
+  create_ebs_workload_compartment:
+    title: create EBS compartment structure
+    default: true 
+    required: true 
+    type: boolean
+    visible: advanced_options
+  ebs_workload_prefix:
+    title: EBS Workload Prefix
+    description: Name of top EBS compartment, group, and policy
+    type: string
+    required: true
+    pattern: "^[a-zA-Z][a-zA-Z0-9-_.]*$"
+    minLength: 1
+    maxLength: 100
+    default: "ebs"
+    visible: create_ebs_top_compartment
+  ebs_workload_environment_names:
+    title: EBS workload environment Names 
+    type: array
+    items: 
+      type: string
+    visible: create_ebs_top_compartment
+  create_ebs_group:
+    title: Create EBS group 
+    type: boolean 
+    visible: 
+      not:
+        - create_ebs_top_compartment
+
+  ebs_workload_compartment_ocid:
+    title: EBS Cloud Manager Compartment
+    description: OCID of an existing ebs compartment
+    type: oci:identity:compartment:id
+    required: true
+    visible: 
+      and: 
+        - create_ebs_group
+        - not:
+          - create_ebs_top_compartment
+  new_ebs_group_name:
+    title: group name 
+    type: string 
+    required: true
+    visible: 
+      and: 
+        - create_ebs_group
+        - not:
+          - create_ebs_top_compartment
+
+    
+# Secrets
+  create_output_secrets:
+    type: boolean 
+    default: true 
+  create_vault:
+    type: boolean 
+    default: true 
+    visible: create_output_secrets
+  existing_vault:
+    type: oci:kms:vault:id
+    description: select an existing vault. Names populated from Existing Security Compartment
+    dependsOn:
+      compartmentId: security_compartment_ocid
+    visible:
+      and:
+       - create_output_secrets
+       - not:
+          - create_vault
+  vault_name:
+    type: string 
+    default: vault
+    visible: 
+      and: 
+        - create_output_secrets
+        - create_vault
+  vault_type:
+    type: enum
+    enum:
+    - DEFAULT
+    - VIRTUAL_PRIVATE # TODO: check this is the correct name for virtual private vault type
+    visible: 
+      and: 
+        - create_output_secrets
+        - create_vault
+  create_secret_key:
+    type: boolean 
+    default: true 
+    visible:
+      and:
+       - create_output_secrets
+       - not: 
+          - create_vault
+  existing_secret_key:
+    type: oci:kms:key:id
+    dependsOn:
+      vaultId: existing_vault
+      compartmentId: security_compartment_ocid
+    visible:
+      and:
+       - create_output_secrets
+       - and:
+          - not: 
+            - create_vault
+          - not:
+            - create_secret_key
+  secret_key_name:
+    type: string 
+    default: secretkey
+    visible: 
+      and: 
+        - create_output_secrets
+        - create_secret_key
+  secret_type:
+    type: string 
+    default: identity
+    visible: create_output_secrets

@@ -1,0 +1,140 @@
+# Copyright © 2022, Oracle and/or its affiliates.
+# All rights reserved. Licensed under the Universal Permissive License (UPL), Version 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
+title: "Landing Zone EBS Security Stack"
+description: "This stack deploys security components for EBS"
+schemaVersion: 1.1.0
+version: "20190404" #docs say use this version but probably out of date
+
+# TODO: use logoURL and source sections
+
+locale: en
+
+variableGroups:
+  - title: "RM controlled Vars"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+  
+  - title: "secrets"
+    visible: true
+    variables: 
+      - load_from_secrets
+      - secret_compartment
+      - identity_secret_ocid
+      - network_secret_ocid
+      - create_output_secret
+      - output_secret_name
+  
+  - title: "network"
+    visible: 
+      not: 
+      - load_from_secrets
+    variables:
+      - vcnCompartment
+      - myVcn
+      - subnetCompartment
+      - bastion_subnet_id
+
+  - title: "Bastion"
+    variables: 
+      - security_compartment
+      - bastion_ttl_limit
+      - bastion_allow_list 
+      - bastion_name
+  
+  - title: "Certificates"
+    variables:
+      - generate_root_cert
+      - root_cert_common_name
+      - imported_cert_chain
+      - generate_intermediate_cert
+      - generate_ebscm_cert
+      - ebscm_dns_name
+      - imported_ebscm_cert_bundle
+
+variables:
+  #"RM controlled Vars"
+  tenancy_ocid:
+    type: string
+    title: Tenancy ID
+    description: OCID of the tenancy
+    required: true
+
+  region:
+    type: oci:identity:region:name
+    title: Region
+    description: region to create resources
+    required: true
+
+  current_user_ocid:
+    type: string
+
+  fingerprint:
+    type: string
+    default: " "
+
+  private_key_path:
+    type: string
+    default: " "
+
+
+   #secrets
+  load_from_secrets:
+    type: boolean 
+    default: true
+  secret_compartment:
+    type: oci:identity:compartment:id
+    visible: load_from_secrets
+  identity_secret_ocid:
+    type: oci:kms:secret:id
+    visible: load_from_secrets
+    dependsOn:
+      compartmentId: secret_compartment
+  network_secret_ocid:
+    type: oci:kms:secret:id
+    visible: load_from_secrets
+    dependsOn:
+      compartmentId: secret_compartment
+
+  # network
+  vcnCompartment:
+    type: oci:identity:compartment:id
+
+  myVcn:
+    type: oci:core:vcn:id
+    dependsOn:
+      compartmentId: ${vcnCompartment}
+
+  subnetCompartment:
+    type: oci:identity:compartment:id
+
+  bastion_subnet_id:
+    type: oci:core:subnet:id
+    dependsOn:
+      compartmentId: ${subnetCompartment}
+      vcnId: ${myVcn}
+      hidePublicSubnet: true
+
+    # bastion
+  security_compartment:
+    visible: 
+      not: 
+      - load_from_secrets
+    type: oci:identity:compartment:id
+    default: compartment_ocid
+  bastion_ttl_limit:
+    type: number 
+    default: 10800
+  bastion_allow_list:
+    type: array 
+    items:
+      type: string
+    default: ["0.0.0.0/0"]
+  bastion_name:
+    type: string 
+    default: bastion

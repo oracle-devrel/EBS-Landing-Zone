@@ -1,0 +1,287 @@
+# Copyright © 2022, Oracle and/or its affiliates.
+# All rights reserved. Licensed under the Universal Permissive License (UPL), Version 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
+title: "EBS Cloud Manager Stack"
+description: "This deploys an instance of the EBS Cloud Manager"
+schemaVersion: 1.1.0
+version: "20190404" #docs say use this version but probably out of date
+
+# TODO: use logoURL and source sections
+
+locale: en
+
+variableGroups:
+  - title: "RM controlled Vars"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "global design decisions"
+    visible: true
+    variables:
+      - lz_prefix
+      - ebs_workload_prefix
+      - ebs_workload_environment_name
+      - advanced_options
+      - secret_compartment
+
+  - title: "Dependencies"
+    visible: advanced_options
+    variables: 
+      - load_from_secrets
+      - security_compartment
+      - identity_secret_ocid
+      - create_output_secret
+      - secret_type
+
+  - title: "VCN"
+    variables:
+      - create_vcn
+      - network_compartment
+      - existing_vcn
+      - vcn_cidr
+
+  - title: "bastion"
+    variables:
+      - create_bastion_subnet
+      - bastion_subnet_cidr
+      - use_bastion_service
+      - bastion_allow_list 
+      - bastion_ttl_limit
+
+  - title: "Cloud Manager"
+    variables:
+      - create_cm_subnets
+      - cm_lb_subnet_cidr
+      - cm_app_subnet_cidr
+
+
+  - title: "EBS"
+    variables:
+      - create_lb_app_subnets
+      - lb_subnet_cidr
+      - apps_subnet_cidr
+
+      - create_db_subnet
+      - db_subnet_cidr
+
+      - create_fs_subnet
+      - fs_subnet_cidr
+
+      - create_ext_lb_app_subnets
+      - ext_lb_subnet_cidr
+      - ext_apps_subnet_cidr
+
+
+  
+
+
+variables:
+  #"RM controlled Vars"
+  tenancy_ocid:
+    type: string
+    title: Tenancy ID
+    description: OCID of the tenancy
+    required: true
+
+  region:
+    type: oci:identity:region:name
+    title: Region
+    description: region to create resources
+    required: true
+
+  current_user_ocid:
+    type: string
+
+  fingerprint:
+    type: string
+    default: " "
+
+  private_key_path:
+    type: string
+    default: " "
+
+  #"global design decisions"
+  lz_prefix:
+    type: string 
+    title: Landing Zone Prefix
+    default: "lz"
+  ebs_workload_prefix:
+    type: string
+    title: EBS Workload Prefix
+    default: "ebs"
+  ebs_workload_environment_name:
+    type: string
+    title: EBS Workload environment Name
+
+  advanced_options:
+    type: boolean
+    default: false
+
+  
+  #dependencies
+  load_from_secrets:
+    type: boolean 
+    default: true
+  security_compartment:
+    type: oci:identity:compartment:id
+    visible:
+      not: 
+      - load_from_secrets
+  secret_compartment:
+    type: oci:identity:compartment:id
+    visible: load_from_secrets
+  identity_secret_ocid:
+    type: oci:kms:secret:id
+    visible: load_from_secrets
+    dependsOn:
+      compartmentId: secret_compartment
+  create_output_secret:
+    type: boolean 
+    default: true 
+    visible: load_from_secrets
+  secret_type:
+    type: string 
+    visible: 
+      and: 
+      - load_from_secrets
+      - create_output_secret
+
+
+# networking
+  create_vcn:
+    type: boolean
+    title: Create VCN
+    default: true
+
+  network_compartment:
+    type: oci:identity:compartment:id
+    title: Network Compartment
+    visible: 
+      not: 
+        - and:
+          - create_vcn
+          - load_from_secrets
+
+  existing_vcn:
+    type: oci:core:vcn:id
+    title: Existing VCN
+    dependsOn:
+      compartmentId: network_compartment
+    visible: 
+      not: 
+      - create_vcn
+
+
+  vcn_cidr:
+    type: string
+    title: VCN CIDR
+    default: "10.0.0.0/16"
+    visible: create_vcn
+
+  create_bastion_subnet:
+    type: boolean
+    default: true
+    title: Create Bastion Subnet
+  bastion_subnet_cidr:
+    type: string 
+    title: Bastion Subnet CIDR
+    default: "10.0.0.0/24"
+    visible: create_bastion_subnet
+  use_bastion_service:
+    type: boolean
+    title: Use Bastion Service
+    default: true
+    visible: create_bastion_subnet
+  bastion_allow_list:
+    type: array 
+    title: Bastion Allow List
+    items:
+      type: string
+    default: ["0.0.0.0/0"]
+    visible: 
+      and: 
+      - create_bastion_subnet
+      - use_bastion_service
+  bastion_ttl_limit:
+    type: number 
+    title: Bastion TTL Limit
+    default: 10800
+    visible:
+      and: 
+      - create_bastion_subnet
+      - use_bastion_service
+  
+  create_cm_subnets:
+    type: boolean
+    title: Create Cloud Manager Subnets
+    default: true
+  cm_lb_subnet_cidr:
+    type: string 
+    title: Cloud Manager Load Balancer Subnet CIDR
+    default: "10.0.1.0/24"
+    visible: create_cm_subnets
+  cm_app_subnet_cidr:
+    type: string 
+    title: Cloud Manager Instance Subnet CIDR
+    default: "10.0.2.0/24"
+    visible: create_cm_subnets
+
+
+
+  create_lb_app_subnets:
+    type: boolean
+    title: Create Default LB and App Subnets
+    default: true
+  lb_subnet_cidr:
+    type: string 
+    title: Load Balancer Subnet CIDR
+    default: "10.0.3.0/24"
+    visible: create_lb_app_subnets
+  apps_subnet_cidr:
+    type: string 
+    title: App Subnet CIDR
+    default: "10.0.4.0/24"
+    visible: create_lb_app_subnets
+
+  create_db_subnet:
+    type: boolean
+    title: Create Database Subnet
+    default: true
+  db_subnet_cidr:
+    type: string 
+    title: Database Subnet CIDR
+    default: "10.0.5.0/24"
+    visible: create_db_subnet
+
+  create_fs_subnet:
+    type: boolean 
+    title: Create File Storage Subnet
+    default: false 
+  fs_subnet_cidr:
+    type: string 
+    title: File Storage Subnet CIDR
+    default: "10.0.8.0/24"
+    visible: create_fs_subnet
+
+
+  create_ext_lb_app_subnets:
+    type: boolean
+    title: Create External LB and App Subnets
+    default: false
+  ext_lb_subnet_cidr:
+    type: string 
+    title: External Load Balancer Subnet CIDR
+    default: "10.0.6.0/24"
+    visible: create_ext_lb_app_subnets
+  ext_apps_subnet_cidr:
+    type: string 
+    title: External App Subnet CIDR
+    default: "10.0.7.0/24"
+    visible: create_ext_lb_app_subnets
+
+
