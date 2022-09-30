@@ -130,7 +130,7 @@ variables:
   bastion_ttl_limit:
     type: number 
     default: 10800
-  bastion_allow_list:
+  bastion_allow_list: # assumes input is valid
     type: array 
     items:
       type: string

@@ -12,7 +12,7 @@ variable "create_private_dns" {
   description = "if true, extends private vcn dns to include a new zone that routes using the dns name provided"
 }
 
-variable "domain_name" {
+variable "domain_name" { #assumes input is valid
   type = string 
   default = "ebs.com"
   description = "the domain name used to create a new private dns zone"
@@ -25,7 +25,7 @@ variable "cm_host_name" {
 }
 
 
-variable "lb_ip" {
+variable "lb_ip" { #assumes input is valid
   default = null
 }
 
