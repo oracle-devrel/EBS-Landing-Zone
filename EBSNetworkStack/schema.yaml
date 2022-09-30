@@ -179,6 +179,7 @@ variables:
 
   vcn_cidr:
     type: string
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: VCN CIDR
     default: "10.0.0.0/16"
     visible: create_vcn
@@ -189,6 +190,7 @@ variables:
     title: Create Bastion Subnet
   bastion_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: Bastion Subnet CIDR
     default: "10.0.0.0/24"
     visible: create_bastion_subnet
@@ -222,11 +224,13 @@ variables:
     default: true
   cm_lb_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: Cloud Manager Load Balancer Subnet CIDR
     default: "10.0.1.0/24"
     visible: create_cm_subnets
   cm_app_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: Cloud Manager Instance Subnet CIDR
     default: "10.0.2.0/24"
     visible: create_cm_subnets
@@ -239,11 +243,13 @@ variables:
     default: true
   lb_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: Load Balancer Subnet CIDR
     default: "10.0.3.0/24"
     visible: create_lb_app_subnets
   apps_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: App Subnet CIDR
     default: "10.0.4.0/24"
     visible: create_lb_app_subnets
@@ -254,6 +260,7 @@ variables:
     default: true
   db_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: Database Subnet CIDR
     default: "10.0.5.0/24"
     visible: create_db_subnet
@@ -264,6 +271,7 @@ variables:
     default: false 
   fs_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: File Storage Subnet CIDR
     default: "10.0.8.0/24"
     visible: create_fs_subnet
@@ -275,11 +283,13 @@ variables:
     default: false
   ext_lb_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: External Load Balancer Subnet CIDR
     default: "10.0.6.0/24"
     visible: create_ext_lb_app_subnets
   ext_apps_subnet_cidr:
     type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
     title: External App Subnet CIDR
     default: "10.0.7.0/24"
     visible: create_ext_lb_app_subnets

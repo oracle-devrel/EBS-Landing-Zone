@@ -14,7 +14,7 @@ variable "instance_ssh_public_key" {
 
 }
 
-variable "password" {
+variable "password" { # assumes input is valid
   default = "WElcome##12345"
   type = string 
   description = "The password for the EBS CM Admin. Note: The password should contain at least one of these special characters: _ (underscore), # (hash), or $ (dollar). This password is used by the Oracle E-Business Suite Cloud Manager administrator to connect to the Cloud Manager database, and to run subsequent scripts."
@@ -36,7 +36,7 @@ locals {
 
 
 # IDCS
-variable "client_id" {
+variable "client_id" { 
 }
 variable "client_secret" {
 }

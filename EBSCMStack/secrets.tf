@@ -75,8 +75,8 @@ variable "network_compartment" {
     default = null
 }
 
-variable "security_compartment" {
-    type = string 
+variable "security_compartment" { # assumes input is valid
+    type = string
     default = null
 }
 

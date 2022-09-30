@@ -213,13 +213,13 @@ variables:
     visible:
       not: 
       - load_from_secrets
-  private_lb_ip:
+  private_lb_ip: # assumes input is valid
     type: boolean 
     title: Private LB IP 
     description: if true, creates the CM LB with an internal IP address that is not accessible from the internet
     default: true
     visible: advanced_options
-  cm_hostname:
+  cm_hostname: # assumes input is valid
     type: string
     title: Server host for EBS Cloud Manager Login URL
     description: If the server host is myebscm.example.com, EBS Cloud Manager login URL will be https://myebscm.example.com:8081
@@ -254,13 +254,13 @@ variables:
       - generate_cert
 
 # IDCS
-  client_id:
+  client_id: # assumes input is valid
     type: string
     title: IDCS Client ID 
-  client_secret:
+  client_secret: # assumes input is valid
     type: string 
     title: IDCS Client Secret 
-  client_tenant:
+  client_tenant: # assumes input is valid
     type: string 
     title: IDCS Client Tenant
 
@@ -311,7 +311,7 @@ variables:
     type: oci:identity:availabilitydomain:name
     dependsOn:
       compartmentId: ${tenancy_ocid}
-  password:
+  password: # assumes input is valid
     title: CM password
     type: password
     confirmation: true
