@@ -1,0 +1,37 @@
+#!/bin/bash
+
+passwd=$(echo ${password} | base64 -d)
+
+echo "EBSCM bootstrap started"
+cat<<EOF>/etc/bootinfo.json
+${bootinfo}
+EOF
+
+runuser -l oracle -c "mkdir -p /u01/install/APPS/.oci"
+
+if [[ "yes" == "${generate_profile}" ]]; then
+
+cat<<EOF>/u01/install/APPS/.oci/${user_name}.pem
+${private_key}EOF
+
+chmod 600 /u01/install/APPS/.oci/*
+chown -R oracle:oinstall /u01/install/APPS/.oci/
+	
+fi
+
+runuser -l oracle -c "wget https://objectstorage.uk-london-1.oraclecloud.com/n/ebsdev/b/sample/o/firstboot.pl -O /u01/install/APPS/apps-unlimited-ebs/bin/firstboot.pl"
+
+runuser -l oracle -c "wget https://objectstorage.uk-london-1.oraclecloud.com/n/ebsdev/b/sample/o/oneoff.zip -O /u01/install/APPS/oneoff.zip"
+
+runuser -l oracle -c "unzip -o /u01/install/APPS/oneoff.zip -d /u01/install/APPS"
+
+runuser -l oracle -c "rm /u01/install/APPS/oneoff.zip"
+
+echo "Executing firstboot.pl script"
+runuser -l oracle -c "echo ${passwd} | perl /u01/install/APPS/apps-unlimited-ebs/bin/firstboot.pl > /tmp/firstboot.out"
+
+echo "Opening firewall"
+firewall-offline-cmd --zone=public --add-rich-rule 'rule family=ipv4 source address=0.0.0.0/0 port port=8081 protocol=tcp accept'
+/bin/systemctl restart firewalld
+
+echo "EBSCM bootstrap completed"

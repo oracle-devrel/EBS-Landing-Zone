@@ -1,0 +1,318 @@
+# Copyright © 2022, Oracle and/or its affiliates.
+# All rights reserved. Licensed under the Universal Permissive License (UPL), Version 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
+title: "EBS Cloud Manager Stack"
+description: "This deploys an instance of the EBS Cloud Manager"
+schemaVersion: 1.1.0
+version: "20190404" #docs say use this version but probably out of date
+
+# TODO: use logoURL and source sections
+
+locale: en
+
+variableGroups:
+  - title: "RM controlled Vars"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+      - compartment_ocid
+
+  - title: "global design decisions"
+    visible: true
+    variables:
+      - lz_prefix
+      - ebs_workload_prefix
+      - ebs_workload_environment_name
+      - advanced_options
+      - secret_compartment
+
+  - title: "Dependencies"
+    visible: advanced_options
+    variables: 
+      - load_from_secrets
+      - security_compartment
+      - identity_secret_ocid
+      - network_secret_ocid
+      - environment_network_secret_ocid
+      - security_secret_ocid
+      - create_output_secret
+      - secret_type
+
+  - title: "Networking"
+    visible: 
+      not: 
+      - load_from_secrets
+    variables:
+      - network_compartment
+      - vcn_id
+      - cm_lb_subnet_id
+      - cm_app_subnet_id
+      - lb_subnet_id
+      - apps_subnet_id
+      - db_subnet_id
+      - ext_lb_subnet_id
+      - ext_apps_subnet_id
+
+  
+  - title: "DNS and LB"
+    variables: 
+      - network_compartment
+      - private_lb_ip
+      - cm_hostname
+      - generate_cert
+      - cm_ca_cert
+      - cm_key_cert
+      - cm_public_cert
+
+  - title: "IDCS"
+    variables:
+      - client_id
+      - client_secret
+      - client_tenant
+
+  - title: "EBS CM Admin"
+    variables:
+      - ebs_cm_admin_group
+      - cm_user_ocid
+      - user_api_private_key
+
+  - title: "CM Virtual Machine"
+    visible: true 
+    variables:
+      - cm_compartment
+      - instance_shape
+      - instance_ssh_public_key
+      - instance_ad
+      - password
+
+
+variables: 
+  #"RM controlled Vars"
+  tenancy_ocid:
+    type: string
+    title: Tenancy ID
+    description: OCID of the tenancy
+    required: true
+
+  region:
+    type: oci:identity:region:name
+    title: Region
+    description: region to create resources
+    required: true
+
+  current_user_ocid:
+    type: string
+
+  fingerprint:
+    type: string
+    default: " "
+
+  private_key_path:
+    type: string
+    default: " "
+
+  compartment_ocid:
+    title: Compartment
+    type: oci:identity:compartment:id
+
+
+ #"global design decisions"
+  lz_prefix:
+    type: string 
+    title: Landing Zone Prefix
+    default: "lz"
+  ebs_workload_prefix:
+    type: string
+    default: "ebs"
+  ebs_workload_environment_name:
+    type: string
+
+  advanced_options:
+    type: boolean
+    default: false
+
+  #secrets
+  load_from_secrets:
+    type: boolean 
+    default: true
+  secret_compartment:
+    type: oci:identity:compartment:id
+    visible: load_from_secrets
+  identity_secret_ocid:
+    type: oci:kms:secret:id
+    visible: load_from_secrets
+    dependsOn:
+      compartmentId: secret_compartment
+  network_secret_ocid:
+    type: oci:kms:secret:id
+    visible: load_from_secrets
+    dependsOn:
+      compartmentId: secret_compartment
+  security_secret_ocid:
+    type: oci:kms:secret:id
+    visible: load_from_secrets
+    dependsOn:
+      compartmentId: secret_compartment
+  create_output_secret:
+    type: boolean 
+    default: true 
+    visible: load_from_secrets
+  secret_type:
+    type: string 
+    default: "app"
+    visible: create_output_secret
+
+# ---- subnet picker ---- #
+  vcn_id:
+    type: oci:core:vcn:id
+    dependsOn:
+      compartmentId: network_compartment
+
+  cm_lb_subnet_id:
+    type: oci:core:subnet:id
+    dependsOn:
+      compartmentId: network_compartment
+      vcnId: vcn_id
+      hidePublicSubnet: false
+
+  cm_app_subnet_id:
+    type: oci:core:subnet:id
+    dependsOn:
+      compartmentId: network_compartment
+      vcnId: vcn_id
+      hidePublicSubnet: true
+  
+  lb_subnet_id:
+    type: oci:core:subnet:id
+    dependsOn:
+      compartmentId: network_compartment
+      vcnId: vcn_id
+
+  apps_subnet_id:
+    type: oci:core:subnet:id
+    dependsOn:
+      vcnId: vcn_id
+      compartmentId: network_compartment
+
+  db_subnet_id:
+    type: oci:core:subnet:id
+    dependsOn:
+      vcnId: vcn_id
+      compartmentId: network_compartment
+
+# DNS and load balancer
+  network_compartment:
+    type: oci:identity:compartment:id
+    title: Network compartment
+    description: compartment for networking resources
+    default: compartment_ocid
+    visible:
+      not: 
+      - load_from_secrets
+  private_lb_ip: # assumes input is valid
+    type: boolean 
+    title: Private LB IP 
+    description: if true, creates the CM LB with an internal IP address that is not accessible from the internet
+    default: true
+    visible: advanced_options
+  cm_hostname: # assumes input is valid
+    type: string
+    title: Server host for EBS Cloud Manager Login URL
+    description: If the server host is myebscm.example.com, EBS Cloud Manager login URL will be https://myebscm.example.com:8081
+    default: myebscm.example.com
+    required: true
+  generate_cert:
+    type: boolean
+    title: Generate Cert
+    description: Creates an OCI signed CA and leaf certs. feature backlogged
+    default: false 
+    visible: advanced_options
+  cm_ca_cert:
+    type: file
+    title: "CM CA Cert"
+    description: "Cloud Manager Certificate Authority signed Certificate"
+    visible:
+      not:
+      - generate_cert
+  cm_key_cert:
+    type: file 
+    title: "CM key Cert"
+    description: "Private key for the CA cert"
+    visible:
+      not:
+      - generate_cert
+  cm_public_cert:
+    type: file 
+    title: "CM public Cert"
+    description: "public Cert for the CA cert"
+    visible:
+      not:
+      - generate_cert
+
+# IDCS
+  client_id: # assumes input is valid
+    type: string
+    title: IDCS Client ID 
+  client_secret: # assumes input is valid
+    type: string 
+    title: IDCS Client Secret 
+  client_tenant: # assumes input is valid
+    type: string 
+    title: IDCS Client Tenant
+
+
+ # ebs cm admin
+  cm_user_ocid:
+    type: string 
+    title: Cloud Manager Admin User OCID
+  user_api_private_key:
+    type: string 
+    title: Cloud Manager Admin User Private API key
+  ebs_cm_admin_group:
+    type: oci:identity:groups:id
+    title: Cloud Manager Admin Group
+    dependsOn:
+      compartmentId: tenancy_ocid 
+    visible: 
+      not: 
+      - load_from_secrets
+
+  # Virtual Machine
+  cm_compartment:
+    type: oci:identity:compartment:id
+    title: CM compartment
+    description: compartment to create the Cloud Manager VM in
+    default: compartment_ocid
+    visible:
+      not: 
+      - load_from_secrets
+  instance_shape:
+    title: EBS Cloud Manager Shape
+    description: Select shape for EBS Cloud Manager VM. Standard2.x and Standard.E2.x shapes are recommended
+    type: oci:core:instanceshape:name
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    default: "VM.Standard2.1"
+    required: true
+  instance_ssh_public_key:
+    title: ssh key 
+    description: ssh key for the cm
+    type: oci:core:ssh:publickey #ignore schema validator error. this special type is valid
+    required: true
+    pattern: "((^(ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)(,((ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)*$"
+  instance_ad:
+    title: EBS Cloud Manager Availability Domain
+    description: Select availability domain where EBS Cloud Manager VM will be created.
+    required: true
+    type: oci:identity:availabilitydomain:name
+    dependsOn:
+      compartmentId: ${tenancy_ocid}
+  password: # assumes input is valid
+    title: CM password
+    type: password
+    confirmation: true
+  

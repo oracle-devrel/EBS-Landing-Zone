@@ -1,0 +1,6 @@
+---
+displayName: EBS-Landing-Zone #should match innovation name or repo name
+description: This Repository contains multiple stacks to deploy the EBS Cloud Manager and all OCI dependencies #should match orahub project description which is based off of description given in innovation request
+tags: ["EBS", "E-Business Suite"] #add tags relevant to your innovation
+icon: /logo.png #change this to match your icon file
+

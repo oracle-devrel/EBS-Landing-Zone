@@ -1,0 +1,26 @@
+apiVersion: 1.0.0
+metadata:
+  generateName: cis-ebs-cloud-manager
+attributes:
+  persistVolumes: 'false'
+projects:
+  - name: oci-cis-ebs-cloud-manager
+    source:
+      location: 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/orasenatdpltoci01/b/a2c-code-bucket/o/EBS%2Fa2c-cis-ebs-cloud-manager-initial-development.zip'
+      type: zip
+components:
+  - id: ms-python/python/latest
+    type: chePlugin
+  - id: redhat/java11/latest
+    type: chePlugin
+  - mountSources: true
+    endpoints:
+      - name: django
+        port: 7000
+    memoryLimit: 512Mi
+    type: dockerimage
+    alias: python
+    image: 'iad.ocir.io/orasenatdpltintegration01/a2c-repo:cli-v2'
+  - id: redhat/vscode-yaml/latest
+    type: chePlugin
+
