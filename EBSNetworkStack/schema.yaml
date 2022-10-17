@@ -240,6 +240,7 @@ variables:
     visible: create_cm_subnets
 
 
+
   create_fs_subnet:
     type: boolean 
     title: Create File Storage Subnet
@@ -273,8 +274,6 @@ variables:
     items:
       type: string
     visible: create_fs_subnet
-
-
 
 
   create_lb_app_subnets:
