@@ -59,6 +59,13 @@ variableGroups:
       - cm_lb_subnet_cidr
       - cm_app_subnet_cidr
 
+  - title: "File Storage"
+    variables:
+      - create_fs_subnet
+      - fs_subnet_cidr
+      - mount_target_ad
+      - existing_fs_subnet_ocid
+      - additional_app_subnet_cidrs
 
   - title: "EBS"
     variables:
@@ -68,9 +75,6 @@ variableGroups:
 
       - create_db_subnet
       - db_subnet_cidr
-
-      - create_fs_subnet
-      - fs_subnet_cidr
 
       - create_ext_lb_app_subnets
       - ext_lb_subnet_cidr
@@ -237,6 +241,41 @@ variables:
 
 
 
+  create_fs_subnet:
+    type: boolean 
+    title: Create File Storage Subnet
+    default: false 
+  fs_subnet_cidr:
+    type: string 
+    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
+    title: File Storage Subnet CIDR
+    default: "10.0.8.0/24"
+    visible: create_fs_subnet
+  mount_target_ad:
+    title: Availability Domain for File Storage Mount Target 
+    description: Select availability domain where the File Storage Mount Target will be created.
+    required: true
+    type: oci:identity:availabilitydomain:name
+    dependsOn:
+      compartmentId: ${tenancy_ocid}
+    visible: create_fs_subnet
+  existing_fs_subnet_ocid:
+    title: Existing File Storage Subnet 
+    type: oci:core:subnet:id
+    dependsOn:
+      vcnId: existing_vcn
+      compartmentId: network_compartment
+    visible:
+      not: 
+      - create_fs_subnet
+  additional_app_subnet_cidrs:
+    title: additional app subnet cidrs
+    type: array
+    items:
+      type: string #TODO: add pattern matching for list of cidr blocks
+    visible: create_fs_subnet
+
+
   create_lb_app_subnets:
     type: boolean
     title: Create Default LB and App Subnets
@@ -264,18 +303,6 @@ variables:
     title: Database Subnet CIDR
     default: "10.0.5.0/24"
     visible: create_db_subnet
-
-  create_fs_subnet:
-    type: boolean 
-    title: Create File Storage Subnet
-    default: false 
-  fs_subnet_cidr:
-    type: string 
-    pattern: "^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}$"
-    title: File Storage Subnet CIDR
-    default: "10.0.8.0/24"
-    visible: create_fs_subnet
-
 
   create_ext_lb_app_subnets:
     type: boolean

@@ -104,6 +104,8 @@ module "identity" {
     prefix = var.lz_prefix
 
     create_identity_persona = var.create_identity_personas
+    create_general_persona = var.create_identity_personas
+
 
     create_network_persona = var.create_network_compartment
     network_name = var.network_name # var.network_group_name
