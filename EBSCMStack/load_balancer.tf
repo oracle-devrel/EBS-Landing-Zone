@@ -64,7 +64,7 @@ resource "oci_load_balancer_load_balancer" "ebscm" {
     maximum_bandwidth_in_mbps = "10"
     minimum_bandwidth_in_mbps = "10"
   }
-  compartment_id = local.network_compartment 
+  compartment_id = local.cm_compartment
   subnet_ids     = [local.cm_lb_subnet_id]
   display_name   = "ebscm_lbaas"
   is_private     = var.private_lb_ip
