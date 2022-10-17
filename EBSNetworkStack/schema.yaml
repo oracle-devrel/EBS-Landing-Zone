@@ -272,7 +272,7 @@ variables:
     title: additional app subnet cidrs
     type: array
     items:
-      type: string
+      type: string #TODO: add pattern matching for list of cidr blocks
     visible: create_fs_subnet
 
 

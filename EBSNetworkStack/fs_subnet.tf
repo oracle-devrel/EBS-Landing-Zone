@@ -41,7 +41,13 @@ variable "additional_app_subnet_cidrs" {
 locals{
 
 
-    fs_subnet_id = var.create_fs_subnet ? module.FS-SN[0].subnet_id : null
+    fs_subnet_id = (
+        var.create_fs_subnet 
+            ? module.FS-SN[0].subnet_id 
+            : var.existing_fs_subnet_ocid != null 
+                ? data.oci_core_subnet.fs.id
+                : null
+    )
 
 
     fs_subnet_cidr = (
